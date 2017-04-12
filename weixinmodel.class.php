@@ -47,10 +47,10 @@ class WeixinModel {
 	
 	/**
 	 *自定义菜单用户点击时回复信息
-	 $postObj Xml文件转换成的对象
+	 *$postObj Xml文件转换成的对象
 	 *$content 回复的内容
 	 *$eventKey 点击类型的菜单的KEY
-	 $messageType 回复的文本类型
+	 *$messageType 回复的文本类型
 	 */
 	public function responseOnMenuClick($postObj, $content, $eventKey='', $messageType='text') {
 		if(strtolower(trim($postObj->MsgType)) == 'event') {
