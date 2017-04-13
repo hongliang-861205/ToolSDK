@@ -1,13 +1,17 @@
 <?php
 namespace Home\Common;
 class WeixinModel {
+	private $token = 'hongliang861205';
+	private $appid = 'wxbc4783cf51615381';
+	private $appsecret = 'cb5b3d690af7d3f242e86b823a46215f';
+	
 	/**
 	 *微信公众号配置验证
 	 */
     public function checkSignature() {
 		$timestamp = $_GET['timestamp'];
 		$nonce = $_GET['nonce'];
-		$token = "hongliang861205";
+		$token = $this->token;
 		$signature = $_GET['signature'];
 		
 		$arr = array($timestamp, $nonce, $token);
@@ -175,8 +179,8 @@ class WeixinModel {
 		if($_SESSION['access-token'] && $_SESSION['expire_time'] > time()) {
 			return $_SESSION['access-token']; 
 		} else {
-			$appid = "wxbc4783cf51615381";
-			$appsecret = "cb5b3d690af7d3f242e86b823a46215f";
+			$appid = $this->appid;
+			$appsecret = $this->appsecret;
 			$url = "https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid={$appid}&secret={$appsecret}";
 			$resultArr = $this->http_curl($url);
 			$access_token = $resultArr['access_token']; 
@@ -188,13 +192,11 @@ class WeixinModel {
 	}
 	
 	/**
-	 *自定义菜单
-	 *$menuArr 自定义菜单的数组
+	 *处理Post请求
+	 *$postArr post请求数组
 	 */
-	public function diyMenu($menuArr=array()) {
-		$access_token = $this->getAccessToken();
-		$url = "https://api.weixin.qq.com/cgi-bin/menu/create?access_token={$access_token}";		
-		$json = urldecode(json_encode($menuArr));
+	public function accessPost($url, $postArr=array()) {
+		$json = urldecode(json_encode($postArr));
 		$res = $this->http_curl($url, 'post', 'json', $json);
 		return $res;
 	}
