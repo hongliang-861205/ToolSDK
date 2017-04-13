@@ -195,10 +195,38 @@ class WeixinModel {
 	 *处理Post请求
 	 *$postArr post请求数组
 	 */
-	public function accessPost($url, $postArr=array()) {
+	public function accessPost($url, $postArr=array(), $isUrldecode=false) {	
 		$json = urldecode(json_encode($postArr));
 		$res = $this->http_curl($url, 'post', 'json', $json);
 		return $res;
+	}
+	
+	/**
+	 *自定义菜单
+	 *$menuArr 自定义菜单数组
+	 */
+	public function diyMenu($menuArr) {
+		$access_token = $this->getAccessToken();
+		$url = "https://api.weixin.qq.com/cgi-bin/menu/create?access_token={$access_token}";
+		return $this->accessPost($url, $menuArr, true);
+	}
+	
+	/**
+	 *群发单文本消息
+	 *$content 消息文本内容
+	 *$toUsers 群发信息送达对象数组
+	 */
+	public function MassTextMessage($content, $toUsers=array()) {
+		var messageArr = array(
+			"touser:" => $toUsers,
+			"msgtype" => "text",
+			"text" => array(
+				"content" => $content
+			)
+		);
+		$access_token = $this->getAccessToken();
+		$url = "https://api.weixin.qq.com/cgi-bin/message/mass/send?access_token={$access_token}";
+		return $this->accessPost($url, $messageArr);	
 	}
 }
 ?>
