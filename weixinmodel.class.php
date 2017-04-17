@@ -4,6 +4,7 @@ class WeixinModel {
 	private $token = 'hongliang861205';
 	private $appid = 'wxbc4783cf51615381';
 	private $appsecret = 'cb5b3d690af7d3f242e86b823a46215f';
+	private $webchat_url = "";
 	
 	/**
 	 *微信公众号配置验证
@@ -185,7 +186,7 @@ class WeixinModel {
 			$resultArr = $this->http_curl($url);
 			$access_token = $resultArr['access_token']; 
 			$_SESSION['access-token'] = $access_token;
-			$_SESSION['expire_time'] = $resultArr['expire_time'];
+			$_SESSION['expire_time'] = $time() + intval($resultArr['expire_time']);
 			
 			return $access_token;
 		}
@@ -227,6 +228,76 @@ class WeixinModel {
 		$access_token = $this->getAccessToken();
 		$url = "https://api.weixin.qq.com/cgi-bin/message/mass/send?access_token={$access_token}";
 		return $this->accessPost($url, $messageArr);	
+	}
+	
+	/**
+	 *获取CODE
+	 *$redirect_uri 授权后重定向的回调链接地址
+	 *$scope 应用授权作用域
+	 *$state 重定向后会带上state参数
+	 */
+	public function getCode($redirect_uri, $scope='snsapi_base', $state=1 ) {
+		if($redirect_uri[0] == '/') {
+			$redirect_uri = substr($redirect_uri,1);
+		}
+		$appid = $this->appid;
+		$redirect_uri = $this->webchat_url.urlencode($redirect_uri);
+		$response_type = 'code';
+		$url = "https://open.weixin.qq.com/connect/oauth2/authorize?appid={$appid}&redirect_uri={$redirect_uri}&response_type={$response_type}&scope={$scope}&state={$state}#wechat_redirect";
+		header('Location:'.$url, true, 301);
+	}
+	
+	/**
+	 *通过code换取网页授权access_token
+	 *$code getCode()获取的code参数
+	 *return  Array(access_token, expires_in, refresh_token, openid, scope)
+	 */
+	public function getAuthAccessTokenAndOpenId($code) {
+		$grant_type = 'authorization_code';
+		$appid = $this->appid;
+		$appsecret = $this->appsecret;
+		$url = "https://api.weixin.qq.com/sns/oauth2/access_token?appid={$appid}&secret={$appsecret}&code={$code}&grant_type={$grant_type}";
+		return $this->http_curl($url);
+	}
+	
+	/**
+	 *刷新access_token（如果需要）
+	 *$freshToken 填写通过access_token获取到的refresh_token参数 
+	 *return array(
+        "access_token"=>"网页授权接口调用凭证,注意：此access_token与基础支持的access_token不同",
+        "expires_in"=>access_token接口调用凭证超时时间，单位（秒）,
+        "refresh_token"=>"用户刷新access_token",
+        "openid"=>"用户唯一标识",
+        "scope"=>"用户授权的作用域，使用逗号（,）分隔")
+	 */
+	public function refreshToken($freshToken) {
+		$appid = $this->appid;
+		$grant_type = 'refresh_token';
+		$url = "https://api.weixin.qq.com/sns/oauth2/refresh_token?appid={$appid}&grant_type={$grant_type}&refresh_token={$freshToken}";
+		return $this->http_curl($url);
+	}
+	
+	/**
+	 *拉取用户信息(需scope为 snsapi_userinfo)
+	 *$access_token 网页授权接口调用凭证
+	 *$openid 用户唯一标识 
+	 *$lang 语言
+	 *return 用户的详细信息
+	 */
+	public function getUserInfo($access_token, $openid, $lang='zh_CN') {
+		$url = "https://api.weixin.qq.com/sns/userinfo?access_token={$access_token}&openid={$openid}&lang={$lang}";
+		return $this->http_curl($url);
+	}
+	
+	/**
+	 *检验授权凭证（access_token）是否有效
+	 *$accessToken 网页授权接口调用凭证
+	 *$openid 用户的唯一标识 
+	 *return array("errcode"=>0,"errmsg"=>"ok")
+	 */
+	public function checkAccessToken($accessToken, $openid) {
+		$url = "https://api.weixin.qq.com/sns/auth?access_token={$accessToken}&openid={$openid}";
+		return $this->http_curl($url);
 	}
 }
 ?>
